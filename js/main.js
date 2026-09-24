@@ -396,41 +396,36 @@
   };
   const renderPortfolio = (list, cfg = {}) => {
     const hide = new Set(cfg.ocultar || []);
-    const vids = list.filter(v => !hide.has(v.id)).map(v => ({ ...v, t: v.t || v.title, c: v.c || guessCat(v.t || v.title || ''), v: v.v ?? v.short }));
-    const feat = cfg.destaque || vids[0]?.id;
-    const counts = vids.reduce((a, v) => (a[v.c] = (a[v.c] || 0) + 1, a), {});
-    filters.innerHTML = Object.entries(VCATS).filter(([k]) => k === 'todos' || counts[k]).map(([k, l]) =>
-      `<button class="chip" data-f="${k}" aria-pressed="${k === 'todos'}">${l}<sup>${k === 'todos' ? vids.length : counts[k]}</sup></button>`).join('');
+    let vids = list.filter(v => !hide.has(v.id)).map(v => ({ ...v, t: v.t || v.title, v: v.v ?? v.short }));
+    /* ordem: vídeos novos do canal (fora da lista "ordem") primeiro, depois a ordem escolhida, depois o resto */
+    const ordem = cfg.ordem || [];
+    const pos = id => { const i = ordem.indexOf(id); return i < 0 ? Infinity : i; };
+    const novos = vids.filter(v => v.published && pos(v.id) === Infinity);
+    const fixos = vids.filter(v => pos(v.id) !== Infinity).sort((a, b) => pos(a.id) - pos(b.id));
+    const resto = vids.filter(v => !v.published && pos(v.id) === Infinity);
+    vids = [...novos, ...fixos, ...resto];
+    if (filters) filters.remove();
     vgrid.innerHTML = vids.map((v, i) => `
-      <button class="vcard rv" data-i="${i}" data-c="${v.c}" data-d="${i % 3}">
+      <button class="vcard rv" data-i="${i}" data-d="${i % 3}">
         <span class="vthumb" data-initial="${(v.t || '·').charAt(0)}">
           <img data-ytthumb="${v.id}" alt="" loading="lazy">
-          <span class="vfmt">${v.v ? 'Vertical' : VCATS[v.c]}</span>
+          ${v.v ? '<span class="vfmt">Vertical</span>' : ''}
           <span class="play" aria-hidden="true"></span>
         </span>
-        <span class="vmeta"><small>${VCATS[v.c]}</small><strong>${v.t}</strong></span>
+        <span class="vmeta"><strong>${v.t}</strong></span>
       </button>`).join('');
     $$('.vthumb img', vgrid).forEach(img => ytThumb(img, img.dataset.ytthumb));
     let LIMIT = 9;
     const moreBtn = $('[data-vmore]');
-    let curF = 'todos';
-    const apply = f => {
-      curF = f; let shown = 0;
-      $$('.vcard', vgrid).forEach(card => {
-        const ok = f === 'todos' || card.dataset.c === f;
-        const show = ok && (f !== 'todos' || shown < LIMIT);
-        card.hidden = !show; if (show) { shown++; card.classList.add('in'); }
-        card.classList.toggle('is-feature', f === 'todos' && vids[card.dataset.i].id === feat);
+    const apply = () => {
+      $$('.vcard', vgrid).forEach((card, i) => {
+        const show = i < LIMIT;
+        card.hidden = !show; if (show) card.classList.add('in');
       });
-      if (moreBtn) moreBtn.hidden = !(f === 'todos' && vids.length > LIMIT);
+      if (moreBtn) moreBtn.hidden = !(vids.length > LIMIT);
     };
-    if (moreBtn) moreBtn.onclick = () => { LIMIT += 9; apply(curF); };
-    apply('todos');
-    filters.onclick = e => {
-      const b = e.target.closest('.chip'); if (!b) return;
-      $$('.chip', filters).forEach(c => c.setAttribute('aria-pressed', c === b));
-      apply(b.dataset.f);
-    };
+    if (moreBtn) moreBtn.onclick = () => { LIMIT += 9; apply(); };
+    apply();
     vgrid.onclick = e => {
       const card = e.target.closest('.vcard'); if (!card) return;
       const v = vids[card.dataset.i];
@@ -442,7 +437,7 @@
       fetch('data/youtube.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject()),
       fetch('data/portfolio-config.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
     ]).then(([list, cfg]) => renderPortfolio(list.videos || list, cfg))
-      .catch(() => renderPortfolio(VIDEOS, { destaque: 'J2Myn5_Ot88' }));
+      .catch(() => renderPortfolio(VIDEOS, { ocultar: ['YTT7JiTkgVI', 'EYldMMQJSOI'], ordem: ['J2Myn5_Ot88', 'fsJEGUlxEYM', 'QuIKmVMKgBY', '73AaKkBId6c', 'P0aTGN6WkKo'] }));
   }
 
   /* ---------------- nomes: clique abre o vídeo com som ---------------- */
