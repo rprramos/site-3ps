@@ -1,5 +1,19 @@
 {
- "_leia": "destaque = ID do vídeo em destaque no portfólio. ocultar = IDs que não devem aparecer no site.",
- "destaque": "J2Myn5_Ot88",
- "ocultar": []
+ "_leia": "ordem = IDs na ordem em que aparecem no portfólio (vídeos novos do canal entram automaticamente antes deles). ocultar = IDs que não aparecem no site.",
+ "ordem": [
+  "bMnIn9NEKNA",
+  "J2Myn5_Ot88",
+  "fsJEGUlxEYM",
+  "QuIKmVMKgBY",
+  "73AaKkBId6c",
+  "P0aTGN6WkKo",
+  "qcC0ONycFMU",
+  "F7gQcJjHaaA",
+  "4V6Er4lU7Es",
+  "GIixPEVeirw"
+ ],
+ "ocultar": [
+  "YTT7JiTkgVI",
+  "EYldMMQJSOI"
+ ]
 }
